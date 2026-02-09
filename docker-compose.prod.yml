@@ -1,0 +1,135 @@
+# Auth Gateway - Production Docker Compose
+# Use with: docker-compose -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: auth-gateway-db
+    environment:
+      POSTGRES_DB: auth_gateway
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mcp-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d auth_gateway"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    # No exposed ports in production - internal network only
+
+  # Auth Gateway
+  auth-gateway:
+    build:
+      context: ./auth-gateway
+      dockerfile: Dockerfile
+    container_name: auth-gateway
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/auth_gateway
+      
+      # Encryption
+      AUTH_GATEWAY_ENCRYPTION_KEY: ${AUTH_GATEWAY_ENCRYPTION_KEY}
+      AUTH_GATEWAY_ENCRYPTION_KEY_SALT: ${AUTH_GATEWAY_ENCRYPTION_KEY_SALT}
+      AUTH_GATEWAY_ROTATION_KEYS: ${AUTH_GATEWAY_ROTATION_KEYS:-}
+      
+      # API Security
+      AUTH_GATEWAY_API_KEY: ${AUTH_GATEWAY_API_KEY}
+      
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      
+      # Server
+      ENVIRONMENT: production
+      LOG_LEVEL: ${LOG_LEVEL:-WARNING}
+      LOG_FORMAT: json
+    networks:
+      - mcp-internal
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth-gateway.rule=Host(`${AUTH_DOMAIN}`)"
+      - "traefik.http.routers.auth-gateway.tls=true"
+      - "traefik.http.routers.auth-gateway.tls.certresolver=letsencrypt"
+      - "traefik.http.services.auth-gateway.loadbalancer.server.port=8000"
+
+  # Google Analytics MCP Server
+  ga-mcp:
+    build:
+      context: ./google-analytics-4-mcp-oauth-google-analytics-4-mcp-oauth/google-analytics-4-mcp-oauth-google-analytics-4-mcp-oauth
+      dockerfile: Dockerfile
+    container_name: ga-mcp-server
+    depends_on:
+      - auth-gateway
+    environment:
+      AUTH_GATEWAY_URL: http://auth-gateway:8000
+      AUTH_GATEWAY_API_KEY: ${AUTH_GATEWAY_API_KEY}
+    networks:
+      - mcp-internal
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+
+  # Google Ads MCP Server
+  gads-mcp:
+    build:
+      context: ./google-ads-mcp-oauth-main/google-ads-mcp-oauth-main
+      dockerfile: Dockerfile
+    container_name: gads-mcp-server
+    depends_on:
+      - auth-gateway
+    environment:
+      AUTH_GATEWAY_URL: http://auth-gateway:8000
+      AUTH_GATEWAY_API_KEY: ${AUTH_GATEWAY_API_KEY}
+      GOOGLE_ADS_DEVELOPER_TOKEN: ${GOOGLE_ADS_DEVELOPER_TOKEN}
+      GOOGLE_ADS_LOGIN_CUSTOMER_ID: ${GOOGLE_ADS_LOGIN_CUSTOMER_ID:-}
+    networks:
+      - mcp-internal
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
+
+  # Traefik Reverse Proxy (SSL termination)
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt_certs:/letsencrypt
+    networks:
+      - mcp-internal
+    restart: unless-stopped
+
+networks:
+  mcp-internal:
+    driver: bridge
+    name: mcp-internal
+
+volumes:
+  postgres_data:
+  letsencrypt_certs:

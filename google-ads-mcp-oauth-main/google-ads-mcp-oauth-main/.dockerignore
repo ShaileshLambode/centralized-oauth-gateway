@@ -1,0 +1,28 @@
+.cursor/
+docs/
+pulls/
+# Virtual environments
+venv/
+.env
+    
+Google_Creds/*.json
+# Git
+.git/
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+bg.jpeg
+readme.md
+pyproject.toml
+LICENSE
+ixigo-logo.png
+google-ads.svg
+gaql-google-ads-query-language.mdc
+.python-version

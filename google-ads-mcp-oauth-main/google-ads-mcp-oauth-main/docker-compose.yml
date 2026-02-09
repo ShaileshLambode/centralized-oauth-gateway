@@ -1,0 +1,14 @@
+services:
+  google-ads-mcp:
+    build: .
+    container_name: google_ads_mcp
+    networks:
+      - traefik-net
+    env_file:
+      - .env
+    volumes:
+      - ./Google_Creds:/app/Google_Creds
+    restart: unless-stopped
+networks:
+  traefik-net:
+    external: true

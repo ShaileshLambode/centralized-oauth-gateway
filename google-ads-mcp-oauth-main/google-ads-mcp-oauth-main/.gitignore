@@ -1,0 +1,54 @@
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+
+# ===============================
+# Virtual Environments
+# ===============================
+venv/
+.venv/
+env/
+ENV/
+
+# ===============================
+# Environment variables (SECRET)
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# Google Ads Credentials (CRITICAL)
+# ===============================
+Google_Creds/
+*.json
+google-ads.yaml
+token.json
+credentials.json
+
+# ===============================
+# OAuth / Cache
+# ===============================
+oauth_cache/
+.token/
+.tokens/
+
+# ===============================
+# OS / Editor
+# ===============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ===============================
+# Docker
+# ===============================
+*.tar
+docker-data/

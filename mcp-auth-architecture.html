@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Auth Gateway Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0a0a0f;
+            color: #e4e4e7;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 48px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #71717a;
+        }
+
+        .architecture {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Infrastructure Container */
+        .infra-container {
+            background: linear-gradient(135deg, #18181b 0%, #1f1f23 100%);
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+        }
+
+        .infra-label {
+            position: absolute;
+            top: -12px;
+            left: 24px;
+            background: #0a0a0f;
+            padding: 4px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #a1a1aa;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+        }
+
+        /* Auth Gateway */
+        .auth-gateway {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border: 2px solid #4f46e5;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .gateway-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .gateway-icon {
+            width: 48px;
+            height: 48px;
+            background: #4f46e5;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gateway-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .gateway-url {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #a5b4fc;
+        }
+
+        .gateway-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .gateway-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #818cf8;
+            margin-bottom: 12px;
+        }
+
+        .provider-list, .endpoint-list, .storage-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .provider-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #e4e4e7;
+        }
+
+        .provider-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .provider-dot.google { background: #4285f4; }
+        .provider-dot.microsoft { background: #00a4ef; }
+        .provider-dot.meta { background: #0668e1; }
+
+        .endpoint-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #a5b4fc;
+            padding: 4px 8px;
+            background: rgba(79, 70, 229, 0.2);
+            border-radius: 4px;
+        }
+
+        .endpoint-method {
+            color: #34d399;
+            margin-right: 6px;
+        }
+
+        .storage-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #e4e4e7;
+        }
+
+        /* Connection Lines */
+        .connection-area {
+            display: flex;
+            justify-content: center;
+            padding: 16px 0;
+            position: relative;
+        }
+
+        .connection-line {
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(to bottom, #4f46e5, #3b82f6);
+            position: relative;
+        }
+
+        .connection-label {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #71717a;
+            white-space: nowrap;
+            background: #18181b;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        /* MCP Servers */
+        .mcp-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .mcp-card {
+            background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+            border: 1px solid #44403c;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .mcp-card:hover {
+            border-color: #78716c;
+            transform: translateY(-2px);
+        }
+
+        .mcp-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 12px;
+            background: #3f3f46;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .mcp-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .mcp-desc {
+            font-size: 11px;
+            color: #71717a;
+        }
+
+        .mcp-card.future {
+            border-style: dashed;
+            opacity: 0.6;
+        }
+
+        /* Shared Package */
+        .shared-package {
+            margin-top: 32px;
+            background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+            border: 1px solid #22c55e;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .package-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .package-icon {
+            width: 36px;
+            height: 36px;
+            background: #22c55e;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .package-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .package-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 16px;
+            border-radius: 8px;
+            color: #86efac;
+            overflow-x: auto;
+        }
+
+        /* Flow Section */
+        .flow-section {
+            margin-top: 48px;
+        }
+
+        .flow-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+
+        .flow-steps {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+        }
+
+        .flow-step {
+            flex: 0 0 220px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: '→';
+            position: absolute;
+            right: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #3b82f6;
+            font-size: 20px;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .step-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            font-size: 12px;
+            color: #a1a1aa;
+            line-height: 1.5;
+        }
+
+        .step-actor {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #27272a;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: #71717a;
+        }
+
+        /* Security Box */
+        .security-section {
+            margin-top: 48px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .security-box {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            padding: 24px;
+        }
+
+        .security-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .security-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .security-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            color: #a1a1aa;
+        }
+
+        .security-check {
+            color: #22c55e;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid #27272a;
+            text-align: center;
+            color: #52525b;
+            font-size: 13px;
+        }
+
+        /* Mermaid Section */
+        .mermaid-section {
+            margin-top: 48px;
+        }
+
+        .mermaid-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+
+        .mermaid-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .mermaid-card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .mermaid-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #a1a1aa;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .mermaid-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .mermaid {
+            background: #0f0f14;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#4f46e5',
+                primaryTextColor: '#e4e4e7',
+                primaryBorderColor: '#6366f1',
+                lineColor: '#71717a',
+                secondaryColor: '#1e1b4b',
+                tertiaryColor: '#18181b',
+                background: '#0f0f14',
+                mainBkg: '#18181b',
+                nodeBorder: '#4f46e5',
+                clusterBkg: '#1e1b4b',
+                clusterBorder: '#4f46e5',
+                titleColor: '#fff',
+                edgeLabelBackground: '#18181b',
+                actorBkg: '#312e81',
+                actorBorder: '#6366f1',
+                actorTextColor: '#e4e4e7',
+                actorLineColor: '#71717a',
+                signalColor: '#e4e4e7',
+                signalTextColor: '#e4e4e7',
+                labelBoxBkgColor: '#18181b',
+                labelBoxBorderColor: '#4f46e5',
+                labelTextColor: '#e4e4e7',
+                loopTextColor: '#a1a1aa',
+                noteBkgColor: '#1e1b4b',
+                noteTextColor: '#e4e4e7',
+                noteBorderColor: '#4f46e5'
+            },
+            flowchart: {
+                curve: 'basis',
+                padding: 20
+            },
+            sequence: {
+                diagramMarginX: 20,
+                diagramMarginY: 20,
+                actorMargin: 80,
+                width: 180,
+                height: 50,
+                boxMargin: 10,
+                useMaxWidth: true
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MCP Auth Gateway Architecture</h1>
+            <p class="subtitle">Centralized OAuth authentication for multiple MCP servers</p>
+        </header>
+
+        <div class="architecture">
+            <!-- Hetzner Infrastructure -->
+            <div class="infra-container">
+                <span class="infra-label">☁️ Hetzner Infrastructure</span>
+
+                <!-- Auth Gateway -->
+                <div class="auth-gateway">
+                    <div class="gateway-header">
+                        <div class="gateway-icon">
+                            <svg width="24" height="24" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                                <path d="M7 11V7a5 5 0 0110 0v4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="gateway-title">MCP Auth Gateway</div>
+                            <div class="gateway-url">auth.yourdomain.com (FastAPI)</div>
+                        </div>
+                    </div>
+
+                    <div class="gateway-content">
+                        <div class="gateway-section">
+                            <div class="section-title">OAuth Providers</div>
+                            <div class="provider-list">
+                                <div class="provider-item">
+                                    <span class="provider-dot google"></span>
+                                    Google (Gmail, Ads, Analytics)
+                                </div>
+                                <div class="provider-item">
+                                    <span class="provider-dot microsoft"></span>
+                                    Microsoft (Outlook, Graph)
+                                </div>
+                                <div class="provider-item">
+                                    <span class="provider-dot meta"></span>
+                                    Meta (Ads API)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gateway-section">
+                            <div class="section-title">API Endpoints</div>
+                            <div class="endpoint-list">
+                                <div class="endpoint-item"><span class="endpoint-method">POST</span>/auth/init</div>
+                                <div class="endpoint-item"><span class="endpoint-method">GET</span>/auth/callback/{provider}</div>
+                                <div class="endpoint-item"><span class="endpoint-method">GET</span>/auth/status/{session}</div>
+                                <div class="endpoint-item"><span class="endpoint-method">POST</span>/auth/token</div>
+                                <div class="endpoint-item"><span class="endpoint-method">GET</span>/auth/providers/{profile}</div>
+                            </div>
+                        </div>
+
+                        <div class="gateway-section">
+                            <div class="section-title">Storage</div>
+                            <div class="storage-info">
+                                <div class="storage-item">
+                                    <svg width="16" height="16" fill="none" stroke="#a5b4fc" stroke-width="2" viewBox="0 0 24 24">
+                                        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                                    </svg>
+                                    PostgreSQL
+                                </div>
+                                <div class="storage-item">
+                                    <svg width="16" height="16" fill="none" stroke="#a5b4fc" stroke-width="2" viewBox="0 0 24 24">
+                                        <rect x="3" y="11" width="18" height="11" rx="2"/>
+                                        <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                    </svg>
+                                    Tokens encrypted at rest
+                                </div>
+                                <div class="storage-item">
+                                    <svg width="16" height="16" fill="none" stroke="#a5b4fc" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                                    </svg>
+                                    Auto token refresh
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connection -->
+                <div class="connection-area">
+                    <div class="connection-line">
+                        <span class="connection-label">Internal Network + API Key</span>
+                    </div>
+                </div>
+
+                <!-- MCP Servers -->
+                <div class="mcp-grid">
+                    <div class="mcp-card">
+                        <div class="mcp-icon">📧</div>
+                        <div class="mcp-name">Gmail MCP</div>
+                        <div class="mcp-desc">Email send/read</div>
+                    </div>
+                    <div class="mcp-card">
+                        <div class="mcp-icon">📊</div>
+                        <div class="mcp-name">Google Ads MCP</div>
+                        <div class="mcp-desc">Campaign management</div>
+                    </div>
+                    <div class="mcp-card">
+                        <div class="mcp-icon">📱</div>
+                        <div class="mcp-name">Meta Ads MCP</div>
+                        <div class="mcp-desc">FB/IG advertising</div>
+                    </div>
+                    <div class="mcp-card future">
+                        <div class="mcp-icon">➕</div>
+                        <div class="mcp-name">Future MCPs</div>
+                        <div class="mcp-desc">Easily extensible</div>
+                    </div>
+                </div>
+
+                <!-- Shared Package -->
+                <div class="shared-package">
+                    <div class="package-header">
+                        <div class="package-icon">
+                            <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                            </svg>
+                        </div>
+                        <div class="package-title">mcp-auth-client (Shared Python Package)</div>
+                    </div>
+                    <div class="package-code">
+from mcp_auth_client import AuthClient, require_auth
+
+auth = AuthClient(gateway_url="http://internal:8000", api_key="xxx")
+
+@require_auth(auth, provider="google")
+async def send_email(profile_id: str, to: str, body: str):
+    token = await auth.get_token("google", profile_id)
+    # ... use token
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Flow -->
+        <div class="flow-section">
+            <h2 class="flow-title">Authentication Flow (Inline - Kortix Style)</h2>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-title">User Request</div>
+                    <div class="step-desc">"Send email to john@example.com"</div>
+                    <div class="step-actor">Actor: User → MCP</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Check Auth</div>
+                    <div class="step-desc">MCP calls Auth Gateway to verify if user is authenticated</div>
+                    <div class="step-actor">MCP → GET /auth/status</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Return Auth URL</div>
+                    <div class="step-desc">If not authenticated, return OAuth link to user</div>
+                    <div class="step-actor">MCP → POST /auth/init</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div class="step-title">User Authenticates</div>
+                    <div class="step-desc">User clicks link, completes OAuth with provider</div>
+                    <div class="step-actor">User → Google/Meta/MS</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <div class="step-title">Callback</div>
+                    <div class="step-desc">Provider redirects to Auth Gateway with code</div>
+                    <div class="step-actor">Provider → /auth/callback</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <div class="step-title">User Confirms</div>
+                    <div class="step-desc">User says "done", MCP polls for completion</div>
+                    <div class="step-actor">MCP → GET /auth/status</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">7</div>
+                    <div class="step-title">Get Token & Execute</div>
+                    <div class="step-desc">MCP fetches token, executes original task</div>
+                    <div class="step-actor">MCP → POST /auth/token</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security & Decisions -->
+        <div class="security-section">
+            <div class="security-box">
+                <div class="security-title">
+                    <svg width="20" height="20" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Security Layers
+                </div>
+                <div class="security-list">
+                    <div class="security-item">
+                        <span class="security-check">✓</span>
+                        <span><strong>Network:</strong> Auth Gateway internal IP only (except /callback)</span>
+                    </div>
+                    <div class="security-item">
+                        <span class="security-check">✓</span>
+                        <span><strong>API Auth:</strong> API key in header for MCP → Gateway</span>
+                    </div>
+                    <div class="security-item">
+                        <span class="security-check">✓</span>
+                        <span><strong>Storage:</strong> Tokens encrypted with Fernet/AES</span>
+                    </div>
+                    <div class="security-item">
+                        <span class="security-check">✓</span>
+                        <span><strong>OAuth State:</strong> Short-lived, single-use CSRF tokens</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-box">
+                <div class="security-title">
+                    <svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 16v-4m0-4h.01"/>
+                    </svg>
+                    Open Decisions
+                </div>
+                <div class="security-list">
+                    <div class="security-item">
+                        <span class="security-check">?</span>
+                        <span><strong>Profile ID:</strong> Client name (central-group) or UUID?</span>
+                    </div>
+                    <div class="security-item">
+                        <span class="security-check">?</span>
+                        <span><strong>Multi-account:</strong> Multiple Google accounts per profile?</span>
+                    </div>
+                    <div class="security-item">
+                        <span class="security-check">?</span>
+                        <span><strong>Encryption Key:</strong> Env var or Vault?</span>
+                    </div>
+                    <div class="security-item">
+                        <span class="security-check">?</span>
+                        <span><strong>Callback Domain:</strong> Which subdomain for OAuth?</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mermaid Diagrams Section -->
+        <div class="mermaid-section">
+            <h2 class="mermaid-title">Technical Diagrams</h2>
+            
+            <div class="mermaid-grid">
+                <!-- System Architecture -->
+                <div class="mermaid-card">
+                    <div class="mermaid-card-title">System Architecture</div>
+                    <pre class="mermaid">
+flowchart TB
+    subgraph Hetzner["☁️ Hetzner Infrastructure"]
+        subgraph Gateway["Auth Gateway (FastAPI)"]
+            API["/auth/* endpoints"]
+            DB[(PostgreSQL)]
+            API <--> DB
+        end
+        
+        subgraph MCPs["MCP Servers"]
+            Gmail["📧 Gmail MCP"]
+            GAds["📊 Google Ads MCP"]
+            Meta["📱 Meta Ads MCP"]
+            Future["➕ Future MCPs"]
+        end
+        
+        Pkg["📦 mcp-auth-client"]
+        
+        Gmail & GAds & Meta & Future --> Pkg
+        Pkg --> API
+    end
+    
+    subgraph Providers["OAuth Providers"]
+        Google["Google"]
+        Microsoft["Microsoft"]
+        MetaP["Meta"]
+    end
+    
+    Gateway <--> Providers
+                    </pre>
+                </div>
+
+                <!-- Database Schema -->
+                <div class="mermaid-card">
+                    <div class="mermaid-card-title">Database Schema</div>
+                    <pre class="mermaid">
+erDiagram
+    oauth_providers ||--o{ oauth_credentials : "has"
+    oauth_providers ||--o{ oauth_sessions : "has"
+    
+    oauth_providers {
+        string id PK "google, microsoft, meta"
+        string client_id
+        string client_secret
+        string auth_url
+        string token_url
+        json scopes
+    }
+    
+    oauth_credentials {
+        uuid id PK
+        string profile_id "client identifier"
+        string provider_id FK
+        text access_token "encrypted"
+        text refresh_token "encrypted"
+        timestamp token_expiry
+        json scopes
+    }
+    
+    oauth_sessions {
+        uuid id PK
+        string profile_id
+        string provider_id
+        string state "CSRF token"
+        string status "pending/completed"
+        timestamp expires_at
+    }
+                    </pre>
+                </div>
+
+                <!-- Sequence Diagram - Full Width -->
+                <div class="mermaid-card full-width">
+                    <div class="mermaid-card-title">Authentication Sequence</div>
+                    <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User
+    participant MCP as MCP Server
+    participant Gateway as Auth Gateway
+    participant Provider as OAuth Provider
+    participant DB as PostgreSQL
+
+    User->>MCP: "Send email to john@example.com"
+    MCP->>Gateway: GET /auth/status/{profile_id}
+    Gateway->>DB: Check credentials
+    DB-->>Gateway: Not found
+    Gateway-->>MCP: Not authenticated
+    
+    MCP->>Gateway: POST /auth/init {provider: "google"}
+    Gateway->>DB: Create session with state
+    Gateway-->>MCP: {auth_url, session_id}
+    MCP-->>User: 🔐 Please authenticate: [Sign in with Google]
+    
+    User->>Provider: Click link → OAuth consent
+    Provider->>Gateway: GET /auth/callback?code=xxx&state=yyy
+    Gateway->>Provider: Exchange code for tokens
+    Provider-->>Gateway: {access_token, refresh_token}
+    Gateway->>DB: Store encrypted tokens
+    Gateway-->>User: ✅ Success! Return to assistant.
+    
+    User->>MCP: "Done"
+    MCP->>Gateway: GET /auth/status/{session_id}
+    Gateway-->>MCP: {status: "completed"}
+    
+    MCP->>Gateway: POST /auth/token {profile_id, provider}
+    Gateway->>DB: Fetch tokens (auto-refresh if needed)
+    Gateway-->>MCP: {access_token}
+    
+    MCP->>Provider: Execute API call with token
+    Provider-->>MCP: Response
+    MCP-->>User: ✅ Email sent to john@example.com
+                    </pre>
+                </div>
+
+                <!-- Token Refresh Flow -->
+                <div class="mermaid-card">
+                    <div class="mermaid-card-title">Token Refresh Flow</div>
+                    <pre class="mermaid">
+flowchart TD
+    A[MCP requests token] --> B{Token exists?}
+    B -->|No| C[Return 404: Not authenticated]
+    B -->|Yes| D{Token expired?}
+    D -->|No| E[Return access_token]
+    D -->|Yes| F{Refresh token exists?}
+    F -->|No| G[Return 401: Re-auth required]
+    F -->|Yes| H[Call provider token endpoint]
+    H --> I{Refresh successful?}
+    I -->|Yes| J[Update DB with new tokens]
+    J --> E
+    I -->|No| G
+    
+    style E fill:#166534,stroke:#22c55e
+    style C fill:#7f1d1d,stroke:#ef4444
+    style G fill:#7f1d1d,stroke:#ef4444
+                    </pre>
+                </div>
+
+                <!-- MCP Integration Pattern -->
+                <div class="mermaid-card">
+                    <div class="mermaid-card-title">MCP Integration Pattern</div>
+                    <pre class="mermaid">
+flowchart LR
+    subgraph MCP["Any MCP Server"]
+        Tool["@server.tool()"]
+        Dec["@require_auth()"]
+        Tool --> Dec
+    end
+    
+    subgraph Client["mcp-auth-client"]
+        Init["auth.init_oauth()"]
+        Check["auth.is_authenticated()"]
+        Get["auth.get_token()"]
+    end
+    
+    subgraph Gateway["Auth Gateway"]
+        API["REST API"]
+        Store["Token Store"]
+        API <--> Store
+    end
+    
+    Dec --> Check
+    Check --> API
+    Dec --> Init
+    Init --> API
+    Dec --> Get
+    Get --> API
+    
+    style MCP fill:#1e1b4b,stroke:#4f46e5
+    style Client fill:#14532d,stroke:#22c55e
+    style Gateway fill:#312e81,stroke:#6366f1
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            MCP Auth Gateway Architecture • February 2026
+        </footer>
+    </div>
+</body>
+</html>

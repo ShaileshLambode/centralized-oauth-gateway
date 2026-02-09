@@ -1,0 +1,65 @@
+# Auth Gateway Docker Compose
+# Development/Testing configuration
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: auth-gateway-db
+    environment:
+      POSTGRES_DB: auth_gateway
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - mcp-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_gateway"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Auth Gateway
+  auth-gateway:
+    build: ./auth-gateway
+    container_name: auth-gateway
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://postgres:${DB_PASSWORD:-password}@db:5432/auth_gateway
+      
+      # Encryption (set in .env file)
+      AUTH_GATEWAY_ENCRYPTION_KEY: ${AUTH_GATEWAY_ENCRYPTION_KEY}
+      AUTH_GATEWAY_ENCRYPTION_KEY_SALT: ${AUTH_GATEWAY_ENCRYPTION_KEY_SALT:-}
+      
+      # API Security
+      AUTH_GATEWAY_API_KEY: ${AUTH_GATEWAY_API_KEY}
+      
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8000/auth/callback/google}
+      
+      # Server
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    networks:
+      - mcp-internal
+    restart: unless-stopped
+
+networks:
+  mcp-internal:
+    driver: bridge
+    name: mcp-internal
+
+volumes:
+  postgres_data:
