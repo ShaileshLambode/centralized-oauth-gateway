@@ -11,11 +11,11 @@ services:
     environment:
       POSTGRES_DB: auth_gateway
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_PASSWORD: 1234678
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - mcp-internal
     healthcheck:
@@ -33,7 +33,7 @@ services:
         condition: service_healthy
     environment:
       # Database
-      DATABASE_URL: postgresql+asyncpg://postgres:${DB_PASSWORD:-password}@db:5432/auth_gateway
+      DATABASE_URL: postgresql+asyncpg://postgres:1234678@db:5432/auth_gateway
       
       # Encryption (set in .env file)
       AUTH_GATEWAY_ENCRYPTION_KEY: ${AUTH_GATEWAY_ENCRYPTION_KEY}

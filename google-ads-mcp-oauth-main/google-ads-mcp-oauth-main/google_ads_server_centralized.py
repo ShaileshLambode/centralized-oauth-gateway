@@ -403,11 +403,12 @@ if __name__ == "__main__":
             logger.info("Starting with STDIO transport")
             mcp.run(transport="stdio")
         else:
-            logger.info(f"Starting with HTTP transport on http://0.0.0.0:8000")
+            port = int(os.getenv("PORT", "8001"))
+            logger.info(f"Starting with HTTP transport on http://0.0.0.0:{port}")
             logger.info(f"Using Auth Gateway at: {AUTH_GATEWAY_URL}")
             
             app = mcp.streamable_http_app()
-            uvicorn.run(app, host="0.0.0.0", port=8000)
+            uvicorn.run(app, host="0.0.0.0", port=port)
             
     except (KeyboardInterrupt, SystemExit):
         logger.info("\nStopping Google Ads MCP Server...")

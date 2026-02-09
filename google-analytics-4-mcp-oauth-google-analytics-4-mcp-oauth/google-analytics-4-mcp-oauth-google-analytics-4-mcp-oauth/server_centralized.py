@@ -75,9 +75,9 @@ async def list_properties(
     """
     if ctx:
         if account_id:
-            ctx.info(f"Listing properties for account {account_id}...")
+            await ctx.info(f"Listing properties for account {account_id}...")
         else:
-            ctx.info("Listing all accessible Google Analytics accounts and properties...")
+            await ctx.info("Listing all accessible Google Analytics accounts and properties...")
 
     try:
         headers = await _get_auth_headers(user_email)
@@ -210,7 +210,7 @@ async def get_page_views(
         Page view metrics grouped by specified dimensions
     """
     if ctx:
-        ctx.info(f"Getting page views for property {property_id} from {start_date} to {end_date}...")
+        await ctx.info(f"Getting page views for property {property_id} from {start_date} to {end_date}...")
 
     try:
         headers = await _get_auth_headers(user_email)
@@ -297,7 +297,7 @@ async def get_active_users(
         dimensions: List of dimensions to group by (optional, defaults to ["date"])
     """
     if ctx:
-        ctx.info(f"Getting active users for property {property_id}...")
+        await ctx.info(f"Getting active users for property {property_id}...")
 
     try:
         headers = await _get_auth_headers(user_email)
@@ -371,7 +371,7 @@ async def get_traffic_sources(
         end_date: End date in YYYY-MM-DD format
     """
     if ctx:
-        ctx.info(f"Getting traffic sources for property {property_id}...")
+        await ctx.info(f"Getting traffic sources for property {property_id}...")
 
     try:
         headers = await _get_auth_headers(user_email)
@@ -447,7 +447,7 @@ async def run_report(
         limit: Maximum number of rows to return (default: 10000)
     """
     if ctx:
-        ctx.info(f"Running custom report for property {property_id}...")
+        await ctx.info(f"Running custom report for property {property_id}...")
 
     try:
         headers = await _get_auth_headers(user_email)
@@ -507,14 +507,15 @@ async def run_report(
 
 if __name__ == "__main__":
     if "--http" in sys.argv:
-        logger.info("Starting with HTTP transport on http://0.0.0.0:8000")
-        logger.info("MCP endpoint: http://0.0.0.0:8000/mcp")
+        port = int(os.getenv("PORT", "8002"))
+        logger.info(f"Starting with HTTP transport on http://0.0.0.0:{port}")
+        logger.info(f"MCP endpoint: http://0.0.0.0:{port}/mcp")
         logger.info(f"Using Auth Gateway at: {AUTH_GATEWAY_URL}")
         
         app = mcp.http_app()
         
         try:
-            uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+            uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
         except KeyboardInterrupt:
             logger.info("\nShutting down...")
             sys.exit(0)
