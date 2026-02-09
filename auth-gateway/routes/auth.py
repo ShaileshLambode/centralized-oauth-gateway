@@ -15,7 +15,7 @@ from sqlalchemy import select, and_
 import httpx
 
 from config import settings
-from models import OAuthProvider, OAuthCredential, OAuthSession
+from models import OAuthCredential, OAuthSession
 from schemas import (
     AuthInitRequest, AuthInitResponse,
     AuthStatusResponse,
