@@ -34,8 +34,18 @@ A production-ready centralized OAuth authentication system for Google Ads and Go
    - Google Ads API
 4. Create OAuth 2.0 credentials:
    - Application type: **Web application**
-   - Authorized redirect URI: `http://localhost:8000/auth/callback/google` (dev) or `https://auth.yourdomain.com/auth/callback/google` (prod)
+   - Authorized redirect URI: `http://localhost:8000/auth/callback/google` (local) or `https://<your-ngrok-domain>/auth/callback/google` (recommended for dev)
 5. Note your **Client ID** and **Client Secret**
+
+### Traffic Forwarding (Important)
+
+For Google OAuth to work correctly during development, especially if your callback URL needs to be accessible publicly, use **ngrok**:
+
+```bash
+ngrok http 8000
+```
+
+Copy the forwarding URL (e.g., `https://your-domain.ngrok-free.dev`) and use it as your `GOOGLE_REDIRECT_URI` in `.env` and Google Cloud Console.
 
 ---
 
@@ -379,6 +389,12 @@ curl http://localhost:8000/health
 docker-compose restart db
 docker-compose restart auth-gateway
 ```
+
+### Google Ads 401 Unauthorized
+
+If you receive a 401 error despite being authenticated:
+1. Ensure your Auth Gateway is requesting the `https://www.googleapis.com/auth/google-ads` scope (not `adwords`).
+2. Revoke your token at `/auth/revoke` and re-authenticate.
 
 ---
 
