@@ -41,7 +41,7 @@ GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_DEFAULT_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/analytics.readonly",
-    "https://www.googleapis.com/auth/google-ads"
+    "https://www.googleapis.com/auth/adwords"
 ]
 
 
