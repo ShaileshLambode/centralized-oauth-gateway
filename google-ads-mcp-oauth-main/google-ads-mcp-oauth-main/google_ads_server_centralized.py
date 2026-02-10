@@ -229,7 +229,7 @@ async def execute_gaql_query(
         return "\n".join(result_lines)
 
     except AuthRequiredException as e:
-        return f"🔐 AUTHENTICATION REQUIRED\n\nPlease visit: {e.auth_url}\n\nSay 'done' after completing."
+        return f"🔐 **AUTHENTICATION REQUIRED**\n\nPlease [click here to authenticate]({e.auth_url}) with your Google account.\n\nAfter you have logged in and see the success message, come back here and say 'done' to retry your request."
 
     except Exception as e:
         return f"Error executing GAQL query: {str(e)}"

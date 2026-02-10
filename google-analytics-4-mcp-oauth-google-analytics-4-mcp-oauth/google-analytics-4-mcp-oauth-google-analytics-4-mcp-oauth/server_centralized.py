@@ -180,7 +180,7 @@ async def list_properties(
         return {
             'success': False,
             'error': 'authentication_required',
-            'message': str(e),
+            'message': f"Authentication required. Please [click here]({e.auth_url}) to login.",
             'auth_url': e.auth_url
         }
     except Exception as e:
